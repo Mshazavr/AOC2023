@@ -128,39 +128,37 @@ fn main() {
         .collect();
 
     let n = node_store.get_max_node_id() + 1;
-    let mut graph: Vec<Vec<NodeID>> = vec![Vec::new(); n as usize];
+    let mut graph: Vec<Vec<NodeID>> = vec![Vec::new(); n];
     for (left, right) in edges {
         if left == right {
             panic!("left == right");
         }
-        graph[left as usize].push(right);
-        graph[right as usize].push(left);
+        graph[left].push(right);
+        graph[right].push(left);
     }
     //println!("Graph:");
     //graph.iter().enumerate().for_each(|(i, v)| println!("{}: {:?}", i, v));
 
-    let mut node_infos: Vec<NodeInfo> = vec![
-        NodeInfo {
-            visited: false,
-            ..NodeInfo::default()
-        };
-        n as usize
-    ];
-    let root_id: NodeID = 0;
-    compute_node_info(root_id, None, 0, &mut node_infos, &graph);
-    //println!("Info: ");
-    //node_infos.iter().enumerate().for_each(|(i, info)| println!("{}: {:?}", i, info.num_up_edges_from_subgraph));
-
-    for (i, node) in node_infos.iter().enumerate() {
-        if node.num_up_edges_from_subgraph.unwrap() == 2 {
-            println!("Found cut node: {}", i);
-            println!("Subgraph size: {}", node.subgraph_size.unwrap());
-            println!("Rest size: {}", (n as i32) - node.subgraph_size.unwrap());
-            println!(
-                "Product: {}",
-                ((n as i32) - node.subgraph_size.unwrap()) * node.subgraph_size.unwrap()
-            );
-            println!();
+    for root_id in 0..n {
+        let mut node_infos: Vec<NodeInfo> = vec![
+            NodeInfo {
+                visited: false,
+                ..NodeInfo::default()
+            };
+            n as usize
+        ];
+        compute_node_info(root_id, None, 0, &mut node_infos, &graph);
+        for (i, node) in node_infos.iter().enumerate() {
+            if node.num_up_edges_from_subgraph.unwrap() == 2 {
+                println!("Found cut node: {}", i);
+                println!("Subgraph size: {}", node.subgraph_size.unwrap());
+                println!("Rest size: {}", (n as i32) - node.subgraph_size.unwrap());
+                println!(
+                    "Product: {}",
+                    ((n as i32) - node.subgraph_size.unwrap()) * node.subgraph_size.unwrap()
+                );
+                return;
+            }
         }
     }
 }

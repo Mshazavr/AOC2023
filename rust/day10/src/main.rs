@@ -191,7 +191,7 @@ fn tiles_connected(
         && grid[pos2.0][pos2.1].touches_direction(&relative_position.opposite())
 }
 
-fn solve_part_1() {
+fn solve_part_1_and_2() {
     let input_string: String =
         fs::read_to_string(FILE_PATH).expect("Failed reading input");
 

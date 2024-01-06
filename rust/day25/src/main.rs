@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::cmp;
 use itertools::Itertools;
+use rand::Rng;
 
 static FILE_PATH: &str = "day25.in";
 
@@ -60,6 +61,17 @@ struct NodeInfo {
     num_up_edges_from_subgraph: Option<i32>,
 }
 
+fn gen_random_permutation(n: usize) -> Vec<usize> {
+    let mut rng = rand::thread_rng();
+    let mut permutation: Vec<usize> = (0..n).collect();
+
+    for i in 0..n {
+        let random_index = rng.gen_range(i..n);
+        permutation.swap(i, random_index);
+    }
+    return permutation;
+}
+
 fn compute_node_info(
     v: NodeID,
     p: Option<NodeID>,
@@ -76,13 +88,15 @@ fn compute_node_info(
     let mut num_down_edges = 0;
     let mut num_up_edges_from_subgraph = 0;
 
-    for w in &graph[v] {
-        if p.is_some() && p.unwrap() == *w {
+    let nbs_permuted = gen_random_permutation(graph[v].len()); 
+    for i in nbs_permuted {
+        let w = graph[v][i];
+        if p.is_some() && p.unwrap() == w {
             continue;
         }
 
-        if node_infos[*w].visited {
-            if node_infos[*w].level < node_infos[v].level {
+        if node_infos[w].visited {
+            if node_infos[w].level < node_infos[v].level {
                 num_up_edges += 1;
             } else {
                 num_down_edges += 1;
@@ -90,10 +104,10 @@ fn compute_node_info(
             continue;
         }
 
-        compute_node_info(*w, Some(v), level + 1, node_infos, graph);
-        subgraph_size += node_infos[*w].subgraph_size.unwrap();
+        compute_node_info(w, Some(v), level + 1, node_infos, graph);
+        subgraph_size += node_infos[w].subgraph_size.unwrap();
         num_up_edges_from_subgraph +=
-            node_infos[*w].num_up_edges_from_subgraph.unwrap()
+            node_infos[w].num_up_edges_from_subgraph.unwrap()
     }
     num_up_edges_from_subgraph += num_up_edges - num_down_edges;
 
@@ -139,7 +153,8 @@ fn main() {
     //println!("Graph:");
     //graph.iter().enumerate().for_each(|(i, v)| println!("{}: {:?}", i, v));
 
-    for root_id in 0..n {
+    let num_tries = 20;
+    for iteration in 0..num_tries {
         let mut node_infos: Vec<NodeInfo> = vec![
             NodeInfo {
                 visited: false,
@@ -147,10 +162,10 @@ fn main() {
             };
             n as usize
         ];
-        compute_node_info(root_id, None, 0, &mut node_infos, &graph);
+        compute_node_info(0, None, 0, &mut node_infos, &graph);
         for (i, node) in node_infos.iter().enumerate() {
             if node.num_up_edges_from_subgraph.unwrap() == 2 {
-                println!("Found cut node: {}", i);
+                println!("Found cut node during iteration {}: {}", iteration+1, i);
                 println!("Subgraph size: {}", node.subgraph_size.unwrap());
                 println!("Rest size: {}", (n as i32) - node.subgraph_size.unwrap());
                 println!(
